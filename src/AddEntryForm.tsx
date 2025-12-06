@@ -3,7 +3,7 @@ import { apiService, type IngestNote, type IngestPayload } from './api';
 import './InputForm.css';
 
 // Extend note locally to hold a raw tagsText while editing
-type EditableNote = IngestNote & { tagsText?: string };
+type EditableNote = IngestNote & { tagsText?: string; __invalid?: boolean };
 
 export default function AddEntryForm() {
     const [title, setTitle] = useState('');
@@ -51,17 +51,39 @@ export default function AddEntryForm() {
             title: n.title.trim(),
             content: n.content.trim(),
             kind: n.kind.trim(),
-            // Ensure tags are parsed from tagsText if user didn’t blur
             tags: (n.tags.length ? n.tags : (n.tagsText ?? '')
                 .split(',')
                 .map(t => t.trim())
                 .filter(Boolean))
         }));
 
+    const validateNotes = (ns: EditableNote[]) => {
+        const normalized = ns.map(n => {
+            const title = n.title.trim();
+            const content = n.content.trim();
+            const tags = (n.tags.length ? n.tags : (n.tagsText ?? '')
+                .split(',')
+                .map(t => t.trim())
+                .filter(Boolean));
+            const invalid = !title || !content || tags.length === 0;
+            return { ...n, __invalid: invalid };
+        });
+        setNotes(normalized);
+        const anyInvalid = normalized.some(n => n.__invalid);
+        return !anyInvalid;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
         setStatus(null);
+
+        // Validate notes before building payload
+        if (!validateNotes(notes)) {
+            setStatus('❌ Please complete all notes: Title, Content, and at least one Tag.');
+            setSubmitting(false);
+            return;
+        }
 
         const payload: IngestPayload = {
             title: title.trim(),
@@ -152,8 +174,39 @@ export default function AddEntryForm() {
                     <button type="button" className="action-btn secondary small" onClick={addNote}>+ Add Note</button>
                 </div>
                 {notes.map((note, idx) => (
-                    <div key={idx} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '0.75rem', marginTop: '0.5rem', background: '#f8fafc' }}>
-                        <input className="form-input" placeholder="Note title" value={note.title} onChange={e => updateNote(idx, { title: e.target.value })} />
+                    <div
+                        key={idx}
+                        style={{
+                            border: '1px solid #e5e7eb',
+                            borderRadius: 8,
+                            padding: '0.75rem',
+                            marginTop: '0.5rem',
+                            background: note.__invalid ? '#fff1f2' : '#f8fafc' // red-ish for invalid
+                        }}
+                    >
+                        {/* Inline hint for invalid note */}
+                        {note.__invalid && (
+                            <div
+                                style={{
+                                    background: '#fee2e2',
+                                    border: '1px solid #fecaca',
+                                    color: '#b91c1c',
+                                    borderRadius: 6,
+                                    padding: '0.25rem 0.5rem',
+                                    marginBottom: '0.5rem',
+                                    fontSize: '0.9rem'
+                                }}
+                            >
+                                Please fill Title, Content, and Tags.
+                            </div>
+                        )}
+
+                        <input
+                            className="form-input"
+                            placeholder="Note title"
+                            value={note.title}
+                            onChange={e => updateNote(idx, { title: e.target.value, __invalid: false })}
+                        />
 
                         {/* note_kind dropdown */}
                         <div style={{ marginTop: '0.5rem' }}>
@@ -175,16 +228,27 @@ export default function AddEntryForm() {
                             </select>
                         </div>
 
-                        <textarea className="form-textarea" rows={3} placeholder="Note content" value={note.content} onChange={e => updateNote(idx, { content: e.target.value })} style={{ marginTop: '0.5rem' }} />
+                        <textarea
+                            className="form-textarea"
+                            rows={3}
+                            placeholder="Note content"
+                            value={note.content}
+                            onChange={e => updateNote(idx, { content: e.target.value, __invalid: false })}
+                            style={{ marginTop: '0.5rem' }}
+                        />
 
                         <input
                             className="form-input"
                             placeholder="Tags (comma-separated)"
                             value={note.tagsText ?? note.tags.join(', ')}
                             onChange={e => handleTagsChange(idx, e.target.value)}
-                            onBlur={() => handleTagsBlur(idx)}
+                            onBlur={() => {
+                                handleTagsBlur(idx);
+                                updateNote(idx, { __invalid: false });
+                            }}
                             style={{ marginTop: '0.5rem' }}
                         />
+
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                             <button type="button" className="action-btn secondary small" onClick={() => removeNote(idx)}>Remove</button>
                         </div>

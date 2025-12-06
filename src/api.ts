@@ -1,65 +1,125 @@
 // Mock API service for text and title data
 export interface ApiEntry {
-    id: number;
-    title: string;
-    content: string;
-    createdAt: string;
+  id: number;
+  title: string;
+  content: string;
+  createdAt: string;
+}
+
+// Simulate network delay
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// New types for detailed search response
+export interface ApiHitMetadata {
+  abuseipdb_ip_score: string;
+  code_snippet: string;
+  incident_type: string;
+  ioc_type: string;
+  problem: string;
+  source: string;
+  threat_level: string;
+  title: string;
+  vt_hash_reputation: string;
+}
+
+export interface ApiHit {
+  id: string;
+  score: number;
+  text: string;
+  metadata: ApiHitMetadata;
+}
+
+export interface ApiDetailedResponse {
+  answer: string;
+  hits: ApiHit[];
+}
+
+const API_BASE = "http://localhost:8000/v1/query";
+
+// Fallback entries if server is unavailable or returns invalid shape
+const FALLBACK_ENTRIES: ApiEntry[] = [];
+
+async function fetchApiData(query: string = "entries"): Promise<ApiEntry[]> {
+  const res = await fetch(API_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query })
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Entries fetch failed: ${res.status} ${text}`);
   }
-  
-  const mockApiData: ApiEntry[] = [
-    {
-      id: 1,
-      title: "React Introduction",
-      content: "React is a declarative, efficient, and flexible JavaScript library for building user interfaces.",
-      createdAt: "2024-01-15T10:30:00Z"
-    },
-    {
-      id: 2,
-      title: "Vite Overview",
-      content: "Vite is a build tool that provides a faster and leaner development experience for modern web projects.",
-      createdAt: "2024-01-20T14:45:00Z"
-    },
-    {
-      id: 3,
-      title: "TypeScript Benefits",
-      content: "TypeScript adds static typing to JavaScript, which helps catch errors early and improves code quality.",
-      createdAt: "2024-01-25T09:15:00Z"
-    },
-    {
-      id: 4,
-      title: "CSS Flexbox Guide",
-      content: "Flexbox is a CSS layout module that makes it easier to design flexible and responsive layouts.",
-      createdAt: "2024-02-01T16:20:00Z"
-    },
-    {
-      id: 5,
-      title: "JavaScript ES6 Features",
-      content: "ES6 introduced many new features like arrow functions, template literals, and destructuring.",
-      createdAt: "2024-02-05T11:10:00Z"
+  const data = await res.json().catch(() => null);
+  const entries = Array.isArray(data) ? data : data?.hits;
+  if (!Array.isArray(entries)) throw new Error("Invalid entries response shape");
+  return entries as ApiEntry[];
+}
+
+async function fetchDetailedFromServer(keyword: string): Promise<ApiDetailedResponse> {
+  const res = await fetch(API_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query: keyword })
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Query failed: ${res.status} ${text}`);
+  }
+  const data = await res.json().catch(() => ({}));
+  return {
+    answer: data?.answer ?? `Answer for: ${keyword}\n\nTop results:\n- No answer provided.`,
+    hits: Array.isArray(data?.hits) ? data.hits : []
+  };
+}
+
+export const apiService = {
+  async getEntries(): Promise<ApiEntry[]> {
+    await delay(500);
+    try {
+      return await fetchApiData("");
+    } catch {
+      return [...FALLBACK_ENTRIES];
     }
-  ];
-  
-  // Simulate network delay
-  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-  
-  export const apiService = {
-    async getEntries(): Promise<ApiEntry[]> {
-      await delay(500);
-      return [...mockApiData];
-    },
-    
-    async getRandomEntry(): Promise<ApiEntry> {
-      await delay(300);
-      const randomIndex = Math.floor(Math.random() * mockApiData.length);
-      return { ...mockApiData[randomIndex] };
-    },
-    
-    async searchEntries(keyword: string): Promise<ApiEntry[]> {
-      await delay(400);
+  },
+
+  async getRandomEntry(): Promise<ApiEntry> {
+    await delay(300);
+    try {
+      const entries = await fetchApiData("entries");
+      const randomIndex = Math.floor(Math.random() * entries.length);
+      return { ...entries[randomIndex] };
+    } catch {
+      const randomIndex = Math.floor(Math.random() * FALLBACK_ENTRIES.length);
+      return { ...FALLBACK_ENTRIES[randomIndex] };
+    }
+  },
+
+  async searchEntries(keyword: string): Promise<ApiEntry[]> {
+    await delay(400);
+    try {
+      // Prefer server-side search if backend supports returning entries for a keyword
+      const serverEntries = await fetchApiData(keyword.trim() || "entries");
+      return serverEntries;
+    } catch {
+      // Fallback to client-side filtering on fallback data
       const lowerKeyword = keyword.toLowerCase();
-      return mockApiData.filter(entry => 
+      return FALLBACK_ENTRIES.filter(entry =>
         entry.title.toLowerCase().includes(lowerKeyword) ||
         entry.content.toLowerCase().includes(lowerKeyword)
       );
     }
-  };
+  },
+
+  // New method: get detailed response (answer + hits) for a keyword
+  async searchDetailed(keyword: string): Promise<ApiDetailedResponse> {
+    await delay(400);
+    try {
+      return await fetchDetailedFromServer(keyword.trim());
+    } catch {
+      return {
+        answer: `Answer for: ${keyword}\n\nTop results:\n- No results found.`,
+        hits: []
+      };
+    }
+  }
+};

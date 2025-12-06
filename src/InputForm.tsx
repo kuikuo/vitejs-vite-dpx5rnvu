@@ -1,8 +1,8 @@
-import { useState, FormEvent, ChangeEvent } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 import './InputForm.css';
 
 interface InputFormProps {
-  onAddEntry: (entry: { id: number; title: string; text: string }) => void;
+  onAddEntry: (entry: { id: string; title: string; text: string }) => void;
 }
 
 export default function InputForm({ onAddEntry }: InputFormProps) {
@@ -22,9 +22,9 @@ export default function InputForm({ onAddEntry }: InputFormProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (formData.title.trim() && formData.text.trim()) {
-      onAddEntry({ 
-        ...formData, 
-        id: Date.now()
+      onAddEntry({
+        ...formData,
+        id: String(Date.now())
       });
       setFormData({ title: '', text: '' });
     }
@@ -33,7 +33,7 @@ export default function InputForm({ onAddEntry }: InputFormProps) {
   return (
     <form onSubmit={handleSubmit} className="input-form">
       <h2 className="form-title">Add New Entry</h2>
-      
+
       <div className="form-group">
         <label htmlFor="title" className="form-label">
           Title <span className="required">*</span>
@@ -44,12 +44,12 @@ export default function InputForm({ onAddEntry }: InputFormProps) {
           name="title"
           value={formData.title}
           onChange={handleChange}
-          placeholder="Enter a title for your entry..."
+          placeholder="Enter a title for your problem..."
           className="form-input"
           required
         />
       </div>
-      
+
       <div className="form-group">
         <label htmlFor="text" className="form-label">
           Text Content <span className="required">*</span>
@@ -59,23 +59,23 @@ export default function InputForm({ onAddEntry }: InputFormProps) {
           name="text"
           value={formData.text}
           onChange={handleChange}
-          placeholder="Enter your text content here..."
+          placeholder="Enter your solution here..."
           rows={4}
           className="form-textarea"
           required
         />
       </div>
-      
+
       <div className="form-actions">
         <button type="submit" className="submit-btn">
           Add to Table
         </button>
-        <button 
-          type="button" 
+        <button
+          type="button"
           className="clear-btn"
           onClick={() => setFormData({ title: '', text: '' })}
         >
-          Clear Form
+          Clear
         </button>
       </div>
     </form>

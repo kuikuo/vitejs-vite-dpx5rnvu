@@ -2,12 +2,13 @@ import './DataTable.css';
 
 interface DataTableProps {
   data: Array<{
-    id: number;
+    id: string;
     title: string;
     text: string;
-    date: string;
+    problem: string;
+    solution: string;
   }>;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
 }
 
 export default function DataTable({ data, onDelete }: DataTableProps) {
@@ -19,15 +20,11 @@ export default function DataTable({ data, onDelete }: DataTableProps) {
         <p className="empty-text">
           Start by adding entries using the form above or load sample data from the API.
         </p>
-        <div className="empty-hint">
-          <p>💡 Click "Add Random Entry" in the header to get started quickly!</p>
-        </div>
       </div>
     );
   }
 
-// Update the return statement in DataTable.tsx:
-return (
+  return (
     <div className="table-container-wrapper">
       <div className="table-container">
         <div className="table-header">
@@ -37,15 +34,15 @@ return (
             <span>entr{data.length === 1 ? 'y' : 'ies'} in table</span>
           </div>
         </div>
-        
+
         {/* Scrollable table area */}
         <div className="table-scroll-area">
           <table className="data-table">
             <thead>
               <tr>
                 <th className="column-title">Title</th>
-                <th className="column-content">Content</th>
-                <th className="column-date">Date Added</th>
+                <th className="column-content">Problem</th>
+                <th className="column-content">Solution</th>
                 <th className="column-actions">Actions</th>
               </tr>
             </thead>
@@ -56,13 +53,13 @@ return (
                     <div className="title-content">{entry.title}</div>
                   </td>
                   <td className="cell-content">
-                    <div className="content-text">{entry.text}</div>
+                    <div className="content-text">{entry.problem || '—'}</div>
                   </td>
-                  <td className="cell-date">
-                    <span className="date-badge">{entry.date}</span>
+                  <td className="cell-content">
+                    <div className="content-text">{entry.solution || '—'}</div>
                   </td>
                   <td className="cell-actions">
-                    <button 
+                    <button
                       onClick={() => onDelete(entry.id)}
                       className="delete-btn"
                       title="Delete this entry"

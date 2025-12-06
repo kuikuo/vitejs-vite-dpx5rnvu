@@ -109,14 +109,17 @@ function App() {
   };
 
   const handleClearAll = () => {
-    setEntries([]);
+    apiService.clearEntries().then(() => {
+      setEntries([]);
+      setError(null);
+    })
   };
 
   return (
     <div className="app">
       <header className="app-header">
         <h1>BrainCache</h1>
-        <p>Create, manage, and display previous problems & their solutions</p>
+        <p>Transform experiences into productivity</p>
         <div className="header-controls">
           <button onClick={handleRefresh} disabled={loading} className="control-btn secondary">
             {loading ? '⏳ Loading...' : '🔄 Refresh'}

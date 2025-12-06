@@ -156,5 +156,20 @@ export const apiService = {
       // response may be empty or not JSON; ignore
     }
     return { ok: res.ok, status: res.status, data };
+  },
+
+  async clearEntries(): Promise<{ ok: boolean; status: number; data?: unknown }> {
+    await delay(200);
+    const res = await fetch(API_BASE + "admin/clear", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+    let data: unknown = undefined;
+    try {
+      data = await res.json();
+    } catch {
+      // response may be empty or not JSON; ignore
+    }
+    return { ok: res.ok, status: res.status, data };
   }
 };

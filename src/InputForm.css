@@ -53,10 +53,14 @@ select.form-input {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  min-height: 52px;       /* taller dropdown */
-  height: auto;           /* allow min-height to take effect */
-  line-height: 1.6;       /* better vertical centering */
-  padding-top: 0.75rem;   /* increase vertical padding */
+  min-height: 52px;
+  /* taller dropdown */
+  height: auto;
+  /* allow min-height to take effect */
+  line-height: 1.6;
+  /* better vertical centering */
+  padding-top: 0.75rem;
+  /* increase vertical padding */
   padding-bottom: 0.75rem;
   padding-left: 0.875rem;
   /* match input padding */

@@ -213,9 +213,34 @@ function App() {
         );
       }
 
+      // Special-case: General References — remove "Title:" duplicates and dedupe
+      if (/general references/i.test(label)) {
+        // Flatten bullet lines, drop "Title:" lines, and dedupe normalized items
+        const rawItems = content.flatMap(line =>
+          line.startsWith('- ') ? [line.slice(2)] : [line]
+        );
+        const filtered = rawItems.filter(item => !/^title:\s/i.test(item));
+        const deduped: string[] = [];
+        const seen = new Set<string>();
+        for (const s of filtered) {
+          const key = s.replace(/\s+/g, ' ').trim().toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+            deduped.push(s); // keep full text; no truncation
+          }
+        }
+        return (
+          <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem', color: '#475569' }}>
+            {deduped.map((item, idx) => (
+              <li key={idx} style={{ whiteSpace: 'pre-wrap' }}>{item}</li>
+            ))}
+          </ul>
+        );
+      }
+
       if (hasBullets) {
         const items = content
-          .flatMap(line => line.startsWith('- ') ? [line.slice(2)] : [line])
+          .flatMap(line => (line.startsWith('- ') ? [line.slice(2)] : [line]))
           .filter(Boolean);
         return (
           <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem', color: '#475569' }}>

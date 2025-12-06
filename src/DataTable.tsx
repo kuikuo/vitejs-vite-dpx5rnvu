@@ -215,7 +215,10 @@ export default function DataTable({ data, onDelete }: DataTableProps) {
                                   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
                                   fontSize: '0.9rem',
                                   lineHeight: 1.5,
-                                  whiteSpace: 'pre-wrap'
+                                  whiteSpace: 'pre-wrap',
+                                  wordBreak: 'break-word',   // break long tokens like registry paths/URLs
+                                  overflowX: 'auto',         // allow horizontal scroll if still too long
+                                  maxWidth: '100%'           // constrain to container width
                                 }}
                               >
                                 {String(value)}

@@ -41,7 +41,7 @@ export interface ApiDetailedResponse {
   hits: ApiHit[];
 }
 
-const API_BASE = "http://localhost:8000/v1/";
+const API_BASE = "https://37b87805c5d9.ngrok-free.app/v1/";
 
 // Fallback entries if server is unavailable or returns invalid shape
 const FALLBACK_ENTRIES: ApiEntry[] = [];

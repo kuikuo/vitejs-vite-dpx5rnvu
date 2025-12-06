@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './DataTable.css';
+import { apiService } from './api';
 
 type EntryMetadata = {
   abuseipdb_ip_score?: string;
@@ -22,7 +23,7 @@ interface DataTableProps {
     solution: string;
     metadata?: EntryMetadata;
   }>;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => void; // was: (id: string) => null
 }
 
 export default function DataTable({ data, onDelete }: DataTableProps) {
@@ -104,9 +105,16 @@ export default function DataTable({ data, onDelete }: DataTableProps) {
                   </td>
                   <td className="cell-actions">
                     <button
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
-                        onDelete(entry.id);
+                        const res = await apiService.deleteEntry(entry.id);
+                        if (res.ok) {
+                          onDelete(entry.id);
+                        } else {
+                          // optional minimal feedback
+                          console.error('Delete failed', res.status);
+                          alert('Failed to delete entry.');
+                        }
                       }}
                       className="delete-btn"
                       title="Delete this entry"

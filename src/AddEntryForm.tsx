@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { apiService, type IngestNote, type IngestPayload } from './api';
-import './InputForm.css'; // ensure form styles are applied in the modal
+import './InputForm.css';
+
+// Extend note locally to hold a raw tagsText while editing
+type EditableNote = IngestNote & { tagsText?: string };
 
 export default function AddEntryForm() {
     const [title, setTitle] = useState('');
@@ -10,17 +13,50 @@ export default function AddEntryForm() {
     const [threatLevel, setThreatLevel] = useState('high');
     const [incidentType, setIncidentType] = useState('malware');
     const [codeSnippet, setCodeSnippet] = useState('');
-    const [notes, setNotes] = useState<IngestNote[]>([]);
+    const [notes, setNotes] = useState<EditableNote[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [status, setStatus] = useState<string | null>(null);
 
     const addNote = () => {
-        setNotes(prev => [...prev, { title: '', content: '', kind: 'ADR', tags: [] }]);
+        setNotes(prev => [...prev, { title: '', content: '', kind: 'ADR', tags: [], tagsText: '' }]);
     };
-    const updateNote = (idx: number, patch: Partial<IngestNote>) => {
+
+    const updateNote = (idx: number, patch: Partial<EditableNote>) => {
         setNotes(prev => prev.map((n, i) => (i === idx ? { ...n, ...patch } : n)));
     };
-    const removeNote = (idx: number) => setNotes(prev => prev.filter((_, i) => i !== idx));
+
+    const removeNote = (idx: number) => {
+        setNotes(prev => prev.filter((_, i) => i !== idx));
+    };
+
+    const handleTagsChange = (idx: number, raw: string) => {
+        // Keep raw text so typing commas is possible
+        updateNote(idx, { tagsText: raw });
+    };
+
+    const handleTagsBlur = (idx: number) => {
+        // Parse raw text into tags when leaving the field
+        setNotes(prev => prev.map((n, i) => {
+            if (i !== idx) return n;
+            const parsed = (n.tagsText ?? '')
+                .split(',')
+                .map(t => t.trim())
+                .filter(Boolean);
+            return { ...n, tags: parsed };
+        }));
+    };
+
+    const toPayloadNotes = (ns: EditableNote[]): IngestNote[] =>
+        ns.map(n => ({
+            title: n.title.trim(),
+            content: n.content.trim(),
+            kind: n.kind.trim(),
+            // Ensure tags are parsed from tagsText if user didn’t blur
+            tags: (n.tags.length ? n.tags : (n.tagsText ?? '')
+                .split(',')
+                .map(t => t.trim())
+                .filter(Boolean))
+        }));
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -36,17 +72,12 @@ export default function AddEntryForm() {
             threat_level: threatLevel.trim().toLowerCase(),
             incident_type: incidentType.trim().toLowerCase(),
             code_snippet: codeSnippet,
-            notes: notes.map(n => ({
-                title: n.title.trim(),
-                content: n.content.trim(),
-                kind: n.kind.trim(),
-                tags: n.tags
-            }))
+            notes: toPayloadNotes(notes)
         };
 
         try {
             const res = await apiService.addEntry(payload);
-            setStatus(res.ok ? '✅ Entry ingested successfully.' : `❌ Failed (${res.status}).`);
+            setStatus(res.ok ? '✅ New Entry Added.' : `❌ Failed (${res.status}).`);
             if (res.ok) {
                 setTitle(''); setProblem(''); setSolution('');
                 setIocType('url'); setThreatLevel('high'); setIncidentType('malware');
@@ -124,7 +155,14 @@ export default function AddEntryForm() {
                     <div key={idx} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '0.75rem', marginTop: '0.5rem', background: '#f8fafc' }}>
                         <input className="form-input" placeholder="Note title" value={note.title} onChange={e => updateNote(idx, { title: e.target.value })} />
                         <textarea className="form-textarea" rows={3} placeholder="Note content" value={note.content} onChange={e => updateNote(idx, { content: e.target.value })} style={{ marginTop: '0.5rem' }} />
-                        <input className="form-input" placeholder="Tags (comma-separated)" value={note.tags.join(', ')} onChange={e => updateNote(idx, { tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} style={{ marginTop: '0.5rem' }} />
+                        <input
+                            className="form-input"
+                            placeholder="Tags (comma-separated)"
+                            value={note.tagsText ?? note.tags.join(', ')}
+                            onChange={e => handleTagsChange(idx, e.target.value)}
+                            onBlur={() => handleTagsBlur(idx)}
+                            style={{ marginTop: '0.5rem' }}
+                        />
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                             <button type="button" className="action-btn secondary small" onClick={() => removeNote(idx)}>Remove</button>
                         </div>

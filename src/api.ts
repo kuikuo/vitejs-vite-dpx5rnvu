@@ -171,5 +171,39 @@ export const apiService = {
       // response may be empty or not JSON; ignore
     }
     return { ok: res.ok, status: res.status, data };
+  },
+
+  async deleteEntry(id: string): Promise<{ ok: boolean; status: number; data?: unknown }> {
+    await delay(200);
+    const url = `${API_BASE}docs/delete?id=${encodeURIComponent(id)}`;
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" }
+    });
+    let data: unknown = undefined;
+    try {
+      data = await res.json();
+    } catch {
+      // response may be empty or not JSON
+    }
+    return { ok: res.ok, status: res.status, data };
+  },
+
+  async generateInsight(query: string): Promise<{ ok: boolean; status: number; answer: string | null; hitsCount: number }> {
+    await delay(200);
+    const res = await fetch(`${API_BASE}answers/compose`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query })
+    });
+    let data: any = null;
+    try {
+      data = await res.json();
+    } catch {
+      // response may be empty or not JSON
+    }
+    const answer = data?.answer ?? null;
+    const hitsCount = Array.isArray(data?.hits) ? data.hits.length : 0;
+    return { ok: res.ok, status: res.status, answer, hitsCount };
   }
 };

@@ -32,6 +32,12 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  // Insight modal state
+  const [showInsightModal, setShowInsightModal] = useState(false);
+  const [insightProblem, setInsightProblem] = useState('');
+  const [insightLoading, setInsightLoading] = useState(false);
+  const [insightAnswer, setInsightAnswer] = useState<string | null>(null);
+  const [insightHitsCount, setInsightHitsCount] = useState<number>(0);
 
   useEffect(() => {
     setLoading(true);
@@ -115,6 +121,118 @@ function App() {
     })
   };
 
+  const handleInsight = () => {
+    setInsightAnswer(null);
+    setInsightProblem('');
+    setShowInsightModal(true);
+  };
+
+  const submitInsight = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInsightLoading(true);
+    try {
+      const res = await apiService.generateInsight(insightProblem.trim());
+      setInsightAnswer(res.answer ?? null);
+      setInsightHitsCount(res.hitsCount ?? 0);
+    } catch {
+      setInsightAnswer('No answer available.');
+      setInsightHitsCount(0);
+    } finally {
+      setInsightLoading(false);
+    }
+  };
+
+  // Improved formatting: cards, bullets, and code blocks
+  const renderInsightSections = (answer?: string | null) => {
+    if (!answer) return null;
+    const lines = answer.split('\n').map(l => l.trim());
+    const labels = new Set([
+      'Problem Addressed',
+      'Code Snippet',
+      'Cybersecurity Context',
+      'Tradeoffs',
+      'Other Considerations',
+      'General References'
+    ]);
+    const sections: Array<{ label: string; content: string[] }> = [];
+    let current: { label: string; content: string[] } | null = null;
+
+    for (const line of lines) {
+      if (!line) continue;
+      const normalized = line.replace(/:$/, '');
+      if (labels.has(normalized)) {
+        if (current) sections.push(current);
+        current = { label: normalized, content: [] };
+      } else if (current) {
+        current.content.push(line);
+      }
+    }
+    if (current) sections.push(current);
+
+    const renderContent = (content: string[], label: string) => {
+      const isCode = /code snippet/i.test(label);
+      const hasBullets = content.some(c => c.startsWith('- '));
+
+      if (isCode) {
+        return (
+          <pre style={{
+            margin: '0.5rem 0 0',
+            background: '#fff',
+            border: '1px solid #e5e7eb',
+            borderRadius: 8,
+            padding: '0.75rem',
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+            fontSize: '0.9rem',
+            lineHeight: 1.5,
+            whiteSpace: 'pre-wrap'
+          }}>
+            {content.join('\n')}
+          </pre>
+        );
+      }
+
+      if (hasBullets) {
+        const items = content
+          .flatMap(line => line.startsWith('- ') ? [line.slice(2)] : [line])
+          .filter(Boolean);
+        return (
+          <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem', color: '#475569' }}>
+            {items.map((item, idx) => (
+              <li key={idx} style={{ whiteSpace: 'pre-wrap' }}>{item}</li>
+            ))}
+          </ul>
+        );
+      }
+
+      return (
+        <div style={{ marginTop: '0.5rem', color: '#475569', whiteSpace: 'pre-wrap' }}>
+          {content.join('\n')}
+        </div>
+      );
+    };
+
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+        {sections.map((sec, idx) => (
+          <div
+            key={idx}
+            style={{
+              background: '#f8fafc',
+              border: '1px solid #e5e7eb',
+              borderRadius: 12,
+              padding: '0.875rem 1rem'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <strong style={{ color: '#334155', fontSize: '1rem' }}>{sec.label}</strong>
+            </div>
+            {renderContent(sec.content, sec.label)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -126,6 +244,9 @@ function App() {
           </button>
           <button onClick={handleClearAll} className="control-btn danger">
             🗑️ Clear All
+          </button>
+          <button onClick={handleInsight} className="control-btn">
+            🧠 Generate Insight
           </button>
         </div>
       </header>
@@ -174,8 +295,8 @@ function App() {
 
                 <div className="search-info">
                   <p>
-                    <strong>Pro tip:</strong> Try searching with typos (e.g., "reacct")
-                    or partial words (e.g., "script" for "TypeScript").
+                    <strong>Pro tip:</strong> Try searching with typos (e.g., "ipp")
+                    or partial words (e.g., "out" for "outbound").
                   </p>
                 </div>
 
@@ -309,14 +430,116 @@ function App() {
             </div>
           </div>
         )}
-      </main>
 
-      <footer className="app-footer">
-        <p>
-          Built with React + Vite + TypeScript • {entries.length} entries stored •
-          {searchQuery ? ` Searching for "${searchQuery}"` : ' All entries visible'}
-        </p>
-      </footer>
+        {/* Insight Modal */}
+        {showInsightModal && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setShowInsightModal(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(15,23,42,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              overflow: 'auto'
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: 'white',
+                borderRadius: 16,
+                maxWidth: 900,
+                width: '92%',
+                maxHeight: '90vh',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 16px 40px rgba(0,0,0,0.18)'
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '1rem 1.5rem',
+                  borderBottom: '1px solid #e5e7eb',
+                  flexShrink: 0
+                }}
+              >
+                <h2 className="table-title" style={{ margin: 0 }}>Generate Insight</h2>
+                <button
+                  onClick={() => setShowInsightModal(false)}
+                  aria-label="Close"
+                  className="action-btn secondary small"
+                  style={{ border: 'none' }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div style={{ padding: '1.5rem', overflowY: 'auto', minHeight: 0 }}>
+                {!insightAnswer && (
+                  <form onSubmit={submitInsight} className="input-form" style={{ marginTop: 0 }}>
+                    <div className="form-group">
+                      <label className="form-label">Describe the problem *</label>
+                      <textarea
+                        className="form-textarea"
+                        rows={3}
+                        value={insightProblem}
+                        onChange={e => setInsightProblem(e.target.value)}
+                        required
+                        placeholder="e.g., Firewall logs show repeated connections to known bad IP and domain..."
+                      />
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit" className="submit-btn" disabled={insightLoading}>
+                        {insightLoading ? 'Generating…' : 'Generate'}
+                      </button>
+                      <button
+                        type="button"
+                        className="clear-btn"
+                        onClick={() => { setInsightProblem(''); setInsightAnswer(null); }}
+                        disabled={insightLoading}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {insightAnswer && (
+                  <>
+                    {/* Small statistic for related problems */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span style={{ background: '#f1f5f9', border: '1px solid #e5e7eb', borderRadius: 20, padding: '0.25rem 0.75rem', color: '#475569', fontSize: '0.9rem' }}>
+                        Related problems: <strong>{insightHitsCount}</strong>
+                      </span>
+                    </div>
+
+                    <div style={{ marginTop: '0.5rem' }}>
+                      {renderInsightSections(insightAnswer)}
+                    </div>
+                    <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        className="action-btn secondary small"
+                        onClick={() => { setInsightAnswer(null); setInsightProblem(''); setInsightHitsCount(0); }}
+                      >
+                        New Insight
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

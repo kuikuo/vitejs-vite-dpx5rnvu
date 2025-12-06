@@ -154,7 +154,28 @@ export default function AddEntryForm() {
                 {notes.map((note, idx) => (
                     <div key={idx} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '0.75rem', marginTop: '0.5rem', background: '#f8fafc' }}>
                         <input className="form-input" placeholder="Note title" value={note.title} onChange={e => updateNote(idx, { title: e.target.value })} />
+
+                        {/* note_kind dropdown */}
+                        <div style={{ marginTop: '0.5rem' }}>
+                            <label className="form-label" style={{ marginBottom: '0.25rem' }}>Note Kind</label>
+                            <select
+                                className="form-input"
+                                value={note.kind}
+                                onChange={e => updateNote(idx, { kind: e.target.value })}
+                            >
+                                <option value="ADR">ADR (Architecture Decision Record)</option>
+                                <option value="lesson">Lesson</option>
+                                <option value="context">Context</option>
+                                <option value="ioc">IOC</option>
+                                <option value="procedure">Procedure</option>
+                                <option value="analysis">Analysis</option>
+                                <option value="hypothesis">Hypothesis</option>
+                                <option value="reference">Reference</option>
+                            </select>
+                        </div>
+
                         <textarea className="form-textarea" rows={3} placeholder="Note content" value={note.content} onChange={e => updateNote(idx, { content: e.target.value })} style={{ marginTop: '0.5rem' }} />
+
                         <input
                             className="form-input"
                             placeholder="Tags (comma-separated)"

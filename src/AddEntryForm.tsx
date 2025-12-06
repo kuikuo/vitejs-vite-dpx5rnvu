@@ -171,6 +171,7 @@ export default function AddEntryForm() {
                                 <option value="analysis">Analysis</option>
                                 <option value="hypothesis">Hypothesis</option>
                                 <option value="reference">Reference</option>
+                                <option value="incident">Incident</option>
                             </select>
                         </div>
 

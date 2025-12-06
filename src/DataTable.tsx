@@ -154,7 +154,9 @@ export default function DataTable({ data, onDelete }: DataTableProps) {
                 maxWidth: 900,
                 width: '92%',
                 padding: '1.5rem',
-                boxShadow: '0 16px 40px rgba(0,0,0,0.18)'
+                boxShadow: '0 16px 40px rgba(0,0,0,0.18)',
+                maxHeight: '90vh',     // constrain dialog height
+                overflowY: 'auto'      // enable vertical scrolling inside modal
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
@@ -271,7 +273,7 @@ export default function DataTable({ data, onDelete }: DataTableProps) {
                           <strong style={{ color: '#334155' }}>{note.title || 'Untitled Note'}</strong>
                           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                             {note.kind && (
-                              <span style={{ color: '#64748b', fontSize: '0.9rem' }}>{note.kind}</span>
+                              <span style={{ color: '#64748b', fontSize: '0.9rem' }}>{note.kind.charAt(0).toUpperCase() + note.kind.slice(1)}</span>
                             )}
                           </div>
                         </div>

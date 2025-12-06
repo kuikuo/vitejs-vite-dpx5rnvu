@@ -20,6 +20,13 @@ export interface ApiHitMetadata {
   threat_level: string;
   title: string;
   vt_hash_reputation: string;
+  // related notes summary embedded in entry metadata
+  related_notes?: Array<{
+    id: string;
+    title: string;
+    kind?: string;
+    created_at?: string;
+  }>;
 }
 
 export interface ApiHit {

@@ -23,6 +23,7 @@ interface TableEntry {
     title?: string;
     vt_hash_reputation?: string;
   };
+  notes?: Array<{ title: string; content: string; kind?: string; tags?: string[] }>;
 }
 
 function App() {
@@ -43,17 +44,31 @@ function App() {
     setLoading(true);
     apiService.searchDetailed("")
       .then((data) => {
-        const tableEntries = (data.hits ?? []).map(hit => {
-          const { titleFromText, problem, solution } = extractFieldsFromText(hit.text);
-          return {
-            id: hit.id,
-            title: hit.metadata?.title ?? titleFromText ?? 'Untitled',
-            text: hit.text,
-            problem,
-            solution,
-            metadata: hit.metadata // include metadata for modal
-          };
-        });
+        const hits = data.hits ?? [];
+        const tableEntries = hits
+          .filter(hit => hit.metadata?.source === 'entry')
+          .map(hit => {
+            const { titleFromText, problem, solution } = extractFieldsFromText(hit.text);
+            const relatedNotes = (hit.metadata as any)?.related_notes ?? [];
+            const notes = Array.isArray(relatedNotes)
+              ? relatedNotes.map((n: any) => ({
+                title: n?.title ?? 'Note',
+                content: n?.text ?? '',            // include note text as content
+                kind: n?.kind,
+                tags: Array.isArray(n?.tags) ? n.tags : [],
+                created_at: n?.created_at
+              }))
+              : [];
+            return {
+              id: hit.id,
+              title: hit.metadata?.title ?? titleFromText ?? 'Untitled',
+              text: hit.text,
+              problem,
+              solution,
+              metadata: hit.metadata,
+              notes
+            } as TableEntry;
+          });
         setEntries(tableEntries);
         setLoading(false);
       })
@@ -94,17 +109,31 @@ function App() {
     setLoading(true);
     try {
       const data = await apiService.searchDetailed("");
-      const tableEntries = (data.hits ?? []).map(hit => {
-        const { titleFromText, problem, solution } = extractFieldsFromText(hit.text);
-        return {
-          id: hit.id,
-          title: hit.metadata?.title ?? titleFromText ?? 'Untitled',
-          text: hit.text,
-          problem,
-          solution,
-          metadata: hit.metadata // include metadata
-        };
-      });
+      const hits = data.hits ?? [];
+      const tableEntries = hits
+        .filter(hit => hit.metadata?.source === 'entry')
+        .map(hit => {
+          const { titleFromText, problem, solution } = extractFieldsFromText(hit.text);
+          const relatedNotes = (hit.metadata as any)?.related_notes ?? [];
+          const notes = Array.isArray(relatedNotes)
+            ? relatedNotes.map((n: any) => ({
+              title: n?.title ?? 'Note',
+              content: n?.text ?? '',
+              kind: n?.kind,
+              tags: Array.isArray(n?.tags) ? n.tags : [],
+              created_at: n?.created_at
+            }))
+            : [];
+          return {
+            id: hit.id,
+            title: hit.metadata?.title ?? titleFromText ?? 'Untitled',
+            text: hit.text,
+            problem,
+            solution,
+            metadata: hit.metadata,
+            notes
+          } as TableEntry;
+        });
       setEntries(tableEntries);
       setError(null);
     } catch (err) {

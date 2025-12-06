@@ -22,6 +22,7 @@ interface DataTableProps {
     problem: string;
     solution: string;
     metadata?: EntryMetadata;
+    notes?: Array<{ title: string; content: string; kind?: string; tags?: string[] }>; // removed created_at
   }>;
   onDelete: (id: string) => void; // was: (id: string) => null
 }
@@ -247,6 +248,61 @@ export default function DataTable({ data, onDelete }: DataTableProps) {
                   </div>
                 </div>
               )}
+
+              {/* Notes Section */}
+              {selected.notes && selected.notes.length > 0 && (
+                <div style={{ marginTop: '1.25rem' }}>
+                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#334155' }}>Notes</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+                    {selected.notes.map((note, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          background: '#f8fafc',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: 10,
+                          padding: '0.75rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                          <strong style={{ color: '#334155' }}>{note.title || 'Untitled Note'}</strong>
+                          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            {note.kind && (
+                              <span style={{ color: '#64748b', fontSize: '0.9rem' }}>{note.kind}</span>
+                            )}
+                          </div>
+                        </div>
+                        {note.tags && note.tags.length > 0 && (
+                          <div style={{ marginTop: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                            {note.tags.map((t, i) => (
+                              <span
+                                key={i}
+                                style={{
+                                  background: '#eef2ff',
+                                  color: '#4f46e5',
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: 999,
+                                  padding: '0.125rem 0.5rem',
+                                  fontSize: '0.8rem'
+                                }}
+                              >
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <p
+                          className="content-text"
+                          style={{ marginTop: '0.5rem', whiteSpace: 'pre-wrap' }}
+                        >
+                          {note.content || '—'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                 <button onClick={closeModal} className="action-btn secondary small">
                   Close

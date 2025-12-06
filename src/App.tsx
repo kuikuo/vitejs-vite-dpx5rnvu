@@ -12,6 +12,17 @@ interface TableEntry {
   text: string;
   problem: string;
   solution: string;
+  metadata?: {
+    abuseipdb_ip_score?: string;
+    code_snippet?: string;
+    incident_type?: string;
+    ioc_type?: string;
+    problem?: string;
+    source?: string;
+    threat_level?: string;
+    title?: string;
+    vt_hash_reputation?: string;
+  };
 }
 
 function App() {
@@ -32,7 +43,8 @@ function App() {
             title: hit.metadata?.title ?? titleFromText ?? 'Untitled',
             text: hit.text,
             problem,
-            solution
+            solution,
+            metadata: hit.metadata // include metadata for modal
           };
         });
         setEntries(tableEntries);
@@ -93,7 +105,8 @@ function App() {
           title: hit.metadata?.title ?? titleFromText ?? 'Untitled',
           text: hit.text,
           problem,
-          solution
+          solution,
+          metadata: hit.metadata // include metadata
         };
       });
       setEntries(tableEntries);

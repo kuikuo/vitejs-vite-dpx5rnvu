@@ -1,4 +1,17 @@
+import { useState } from 'react';
 import './DataTable.css';
+
+type EntryMetadata = {
+  abuseipdb_ip_score?: string;
+  code_snippet?: string;
+  incident_type?: string;
+  ioc_type?: string;
+  problem?: string; // duplicate, will be excluded
+  source?: string;  // excluded
+  threat_level?: string;
+  title?: string;   // duplicate, will be excluded
+  vt_hash_reputation?: string;
+};
 
 interface DataTableProps {
   data: Array<{
@@ -7,11 +20,37 @@ interface DataTableProps {
     text: string;
     problem: string;
     solution: string;
+    metadata?: EntryMetadata;
   }>;
   onDelete: (id: string) => void;
 }
 
 export default function DataTable({ data, onDelete }: DataTableProps) {
+  const [selected, setSelected] = useState<null | DataTableProps['data'][number]>(null);
+
+  const closeModal = () => setSelected(null);
+
+  const formatLabel = (key: string) =>
+    key
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
+
+  const orderedKeys = [
+    'threat_level',
+    'incident_type',
+    'ioc_type',
+    'abuseipdb_ip_score',
+    'vt_hash_reputation',
+    'code_snippet',
+  ];
+
+  const toBulletItems = (value: unknown) =>
+    String(value)
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(s => s.replace(/\b\w/g, c => c.toUpperCase())); // capitalize words
+
   if (data.length === 0) {
     return (
       <div className="empty-state">
@@ -48,7 +87,12 @@ export default function DataTable({ data, onDelete }: DataTableProps) {
             </thead>
             <tbody>
               {data.map((entry) => (
-                <tr key={entry.id} className="table-row">
+                <tr
+                  key={entry.id}
+                  className="table-row"
+                  onClick={() => setSelected(entry)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <td className="cell-title">
                     <div className="title-content">{entry.title}</div>
                   </td>
@@ -60,7 +104,10 @@ export default function DataTable({ data, onDelete }: DataTableProps) {
                   </td>
                   <td className="cell-actions">
                     <button
-                      onClick={() => onDelete(entry.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(entry.id);
+                      }}
                       className="delete-btn"
                       title="Delete this entry"
                     >
@@ -72,6 +119,134 @@ export default function DataTable({ data, onDelete }: DataTableProps) {
             </tbody>
           </table>
         </div>
+
+        {selected && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="modal-overlay"
+            onClick={closeModal}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(15,23,42,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }}
+          >
+            <div
+              className="modal-content"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: 'white',
+                borderRadius: 16,
+                maxWidth: 900,
+                width: '92%',
+                padding: '1.5rem',
+                boxShadow: '0 16px 40px rgba(0,0,0,0.18)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                <h2 className="table-title" style={{ margin: 0 }}>{selected.title}</h2>
+                <button
+                  onClick={closeModal}
+                  aria-label="Close"
+                  className="action-btn secondary small"
+                  style={{ border: 'none' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 0.5rem 0', color: '#334155' }}>Problem</h4>
+                  <p className="content-text" style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                    {selected.problem || '—'}
+                  </p>
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 0.5rem 0', color: '#334155' }}>Solution</h4>
+                  <p className="content-text" style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                    {selected.solution || '—'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Metadata */}
+              {selected.metadata && (
+                <div style={{ marginTop: '1.25rem' }}>
+                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#334155' }}>Metadata</h4>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                      gap: '0.75rem'
+                    }}
+                  >
+                    {orderedKeys
+                      .filter(k => selected.metadata && k in selected.metadata!)
+                      .map((key) => {
+                        const value = (selected.metadata as Record<string, unknown>)[key];
+                        if (!value) return null;
+
+                        if (key === 'code_snippet') {
+                          return (
+                            <div key={key} style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: 10 }}>
+                              <strong style={{ color: '#334155' }}>{formatLabel(key)}:</strong>
+                              <pre
+                                style={{
+                                  margin: '0.5rem 0 0',
+                                  background: '#fff',
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: 8,
+                                  padding: '0.75rem',
+                                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                                  fontSize: '0.9rem',
+                                  lineHeight: 1.5,
+                                  whiteSpace: 'pre-wrap'
+                                }}
+                              >
+                                {String(value)}
+                              </pre>
+                            </div>
+                          );
+                        }
+
+                        if (key === 'abuseipdb_ip_score' || key === 'vt_hash_reputation') {
+                          const items = toBulletItems(value);
+                          return (
+                            <div key={key} style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: 10 }}>
+                              <strong style={{ color: '#334155' }}>{formatLabel(key)}:</strong>
+                              <ul style={{ margin: '0.5rem 0 0', paddingLeft: '1.25rem', color: '#475569' }}>
+                                {items.map((item, idx) => (
+                                  <li key={idx} style={{ whiteSpace: 'pre-wrap' }}>{item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div key={key} style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: 10 }}>
+                            <strong style={{ color: '#334155' }}>{formatLabel(key)}:</strong>{' '}
+                            <span style={{ color: '#475569', whiteSpace: 'pre-wrap' }}>{String(value)}</span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+              <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                <button onClick={closeModal} className="action-btn secondary small">
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

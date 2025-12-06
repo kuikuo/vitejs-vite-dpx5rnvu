@@ -50,7 +50,7 @@ async function fetchApiData(query: string = "entries"): Promise<ApiEntry[]> {
     throw new Error(`Entries fetch failed: ${res.status} ${text}`);
   }
   const data = await res.json().catch(() => null);
-  const entries = Array.isArray(data) ? data : data?.hits;
+  const entries = Array.isArray(data) ? data : data?.hit;
   if (!Array.isArray(entries)) throw new Error("Invalid entries response shape");
   return entries as ApiEntry[];
 }

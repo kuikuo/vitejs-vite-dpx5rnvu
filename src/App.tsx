@@ -143,13 +143,6 @@ function App() {
     }
   };
 
-  const handleClearAll = () => {
-    apiService.clearEntries().then(() => {
-      setEntries([]);
-      setError(null);
-    })
-  };
-
   const handleInsight = () => {
     setInsightAnswer(null);
     setInsightProblem('');
@@ -270,9 +263,6 @@ function App() {
         <div className="header-controls">
           <button onClick={handleRefresh} disabled={loading} className="control-btn secondary">
             {loading ? '⏳ Loading...' : '🔄 Refresh'}
-          </button>
-          <button onClick={handleClearAll} className="control-btn danger">
-            🗑️ Clear All
           </button>
           <button onClick={handleInsight} className="control-btn">
             🧠 Generate Insight

@@ -1,110 +1,158 @@
 .input-form {
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-  
-  .form-title {
-    color: #1e293b;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-  }
-  
-  .form-group {
-    margin-bottom: 1.5rem;
-  }
-  
-  .form-label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-    color: #334155;
-    font-size: 0.95rem;
-  }
-  
-  .required {
-    color: #ef4444;
-  }
-  
-  .form-input,
-  .form-textarea {
-    width: 100%;
-    padding: 0.875rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-family: inherit;
-    transition: all 0.2s;
-    background-color: #fafafa;
-  }
-  
-  .form-input:focus,
-  .form-textarea:focus {
-    outline: none;
-    border-color: #6366f1;
-    background-color: white;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-  }
-  
-  .form-textarea {
-    resize: vertical;
-    min-height: 120px;
-    line-height: 1.5;
-  }
-  
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.form-title {
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.95rem;
+}
+
+.required {
+  color: #ef4444;
+}
+
+.form-input,
+.form-textarea,
+select.form-input {
+  width: 100%;
+  padding: 0.875rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.2s;
+  background-color: #fafafa;
+  line-height: 1.4;
+  /* normalize for better text rendering */
+  letter-spacing: normal;
+  /* prevent odd spacing */
+  box-sizing: border-box;
+}
+
+/* Simplified select styling: use native arrow, keep consistent look */
+select.form-input {
+  /* Keep native arrow removal if used */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  min-height: 52px;       /* taller dropdown */
+  height: auto;           /* allow min-height to take effect */
+  line-height: 1.6;       /* better vertical centering */
+  padding-top: 0.75rem;   /* increase vertical padding */
+  padding-bottom: 0.75rem;
+  padding-left: 0.875rem;
+  /* match input padding */
+  padding-right: 2.75rem;
+  /* no extra space needed */
+  background-color: #fafafa;
+  /* match inputs */
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  /* Move chevron further right and center vertically */
+  background-image:
+    linear-gradient(45deg, transparent 50%, #94a3b8 50%),
+    linear-gradient(135deg, #94a3b8 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 8px) 50%;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+}
+
+/* Hide legacy expand arrow (IE/Edge old engines) */
+select.form-input::-ms-expand {
+  display: none;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+select.form-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Ensure textarea keeps its own line-height */
+.form-textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.submit-btn,
+.clear-btn {
+  padding: 0.875rem 1.75rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(99, 102, 241, 0.2);
+}
+
+.submit-btn:active {
+  transform: translateY(0);
+}
+
+.clear-btn {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 2px solid #e5e7eb;
+}
+
+.clear-btn:hover {
+  background-color: #e5e7eb;
+  color: #475569;
+}
+
+@media (max-width: 640px) {
   .form-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
+    flex-direction: column;
   }
-  
+
   .submit-btn,
   .clear-btn {
-    padding: 0.875rem 1.75rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    flex: 1;
+    width: 100%;
   }
-  
-  .submit-btn {
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    color: white;
+
+  /* Make selects full width like inputs on small screens */
+  select.form-input {
+    width: 100%;
   }
-  
-  .submit-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(99, 102, 241, 0.2);
-  }
-  
-  .submit-btn:active {
-    transform: translateY(0);
-  }
-  
-  .clear-btn {
-    background-color: #f1f5f9;
-    color: #64748b;
-    border: 2px solid #e5e7eb;
-  }
-  
-  .clear-btn:hover {
-    background-color: #e5e7eb;
-    color: #475569;
-  }
-  
-  @media (max-width: 640px) {
-    .form-actions {
-      flex-direction: column;
-    }
-    
-    .submit-btn,
-    .clear-btn {
-      width: 100%;
-    }
-  }
+}

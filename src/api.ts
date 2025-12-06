@@ -34,13 +34,13 @@ export interface ApiDetailedResponse {
   hits: ApiHit[];
 }
 
-const API_BASE = "http://localhost:8000/v1/query";
+const API_BASE = "http://localhost:8000/v1/";
 
 // Fallback entries if server is unavailable or returns invalid shape
 const FALLBACK_ENTRIES: ApiEntry[] = [];
 
 async function fetchApiData(query: string = "entries"): Promise<ApiEntry[]> {
-  const res = await fetch(API_BASE, {
+  const res = await fetch(API_BASE + "query", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query })
@@ -56,7 +56,7 @@ async function fetchApiData(query: string = "entries"): Promise<ApiEntry[]> {
 }
 
 async function fetchDetailedFromServer(keyword: string): Promise<ApiDetailedResponse> {
-  const res = await fetch(API_BASE, {
+  const res = await fetch(API_BASE + "query", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query: keyword })
@@ -70,6 +70,25 @@ async function fetchDetailedFromServer(keyword: string): Promise<ApiDetailedResp
     answer: data?.answer ?? `Answer for: ${keyword}\n\nTop results:\n- No answer provided.`,
     hits: Array.isArray(data?.hits) ? data.hits : []
   };
+}
+
+export interface IngestNote {
+  title: string;
+  content: string;
+  kind: string;
+  tags: string[];
+}
+
+export interface IngestPayload {
+  title: string;
+  problem: string;
+  solution: string;
+  source: string;
+  ioc_type: string;
+  threat_level: string;
+  incident_type: string;
+  code_snippet: string;
+  notes: IngestNote[];
 }
 
 export const apiService = {
@@ -121,5 +140,21 @@ export const apiService = {
         hits: []
       };
     }
+  },
+
+  async addEntry(payload: IngestPayload): Promise<{ ok: boolean; status: number; data?: unknown }> {
+    await delay(200);
+    const res = await fetch(API_BASE + "ingest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    let data: unknown = undefined;
+    try {
+      data = await res.json();
+    } catch {
+      // response may be empty or not JSON; ignore
+    }
+    return { ok: res.ok, status: res.status, data };
   }
 };

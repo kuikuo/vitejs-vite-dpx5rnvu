@@ -1,10 +1,10 @@
 import Fuse from 'fuse.js';
 import { Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import AddEntryForm from './AddEntryForm';
+import { apiService } from './api';
 import './App.css';
 import DataTable from './DataTable';
-import InputForm from './InputForm';
-import { apiService } from './api';
 
 interface TableEntry {
   id: string;
@@ -31,6 +31,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -78,17 +79,6 @@ function App() {
 
   // Check if search has no results
   const hasNoSearchResults = searchQuery.trim() !== '' && filteredEntries.length === 0;
-
-  const handleAddEntry = (newEntry: Omit<TableEntry, 'problem' | 'solution'>) => {
-    const { titleFromText, problem, solution } = extractFieldsFromText(newEntry.text);
-    const entryWithDerived = {
-      ...newEntry,
-      title: newEntry.title || titleFromText || 'Untitled',
-      problem,
-      solution
-    };
-    setEntries(prev => [entryWithDerived, ...prev]);
-  };
 
   const handleDeleteEntry = (id: string) => {
     setEntries(prev => prev.filter(entry => entry.id !== id));
@@ -215,8 +205,7 @@ function App() {
 
             {/* Right column: Add New Entry Form */}
             <div className="right-column">
-              <InputForm onAddEntry={handleAddEntry} />
-
+              {/* Trigger button for AddEntryForm modal */}
               <div className="stats-section">
                 <h3>📊 Statistics</h3>
                 <div className="stats-grid">
@@ -237,10 +226,86 @@ function App() {
                     </div>
                   </div>
                 </div>
+
+                <div className="quick-actions" style={{ marginTop: '1rem' }}>
+                  <button
+                    type="button"
+                    className="action-btn secondary"
+                    onClick={() => setShowAddModal(true)}
+                    aria-label="Open add entry form"
+                  >
+                    + Add Entry
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* AddEntryForm Modal */}
+        {showAddModal && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setShowAddModal(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(15,23,42,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000,
+              overflow: 'auto' // allow overlay to scroll if content exceeds viewport
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: 'white',
+                borderRadius: 16,
+                maxWidth: 900,
+                width: '92%',
+                maxHeight: '90vh',     // constrain dialog height
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 16px 40px rgba(0,0,0,0.18)'
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  padding: '1rem 1.5rem',
+                  borderBottom: '1px solid #e5e7eb',
+                  flexShrink: 0
+                }}
+              >
+                <h2 className="table-title" style={{ margin: 0 }}>Create New Experience</h2>
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  aria-label="Close"
+                  className="action-btn secondary small"
+                  style={{ border: 'none' }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div
+                style={{
+                  padding: '1.5rem',
+                  overflowY: 'auto',   // scroll inside the dialog
+                  minHeight: 0         // allow flexbox to size correctly
+                }}
+              >
+                {/* Render the ingest form */}
+                <AddEntryForm />
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       <footer className="app-footer">

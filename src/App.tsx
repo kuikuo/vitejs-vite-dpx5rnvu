@@ -550,9 +550,31 @@ function App() {
                       </span>
                     </div>
 
-                    <div style={{ marginTop: '0.5rem' }}>
-                      {renderInsightSections(insightAnswer)}
-                    </div>
+                    {/* No results view when no related hits */}
+                    {insightHitsCount === 0 ? (
+                      <div
+                        style={{
+                          marginTop: '0.5rem',
+                          background: '#f8fafc',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: 12,
+                          padding: '1rem',
+                          textAlign: 'center',
+                          color: '#475569'
+                        }}
+                      >
+                        <div style={{ fontSize: '2rem' }}>🔍</div>
+                        <h4 style={{ margin: '0.5rem 0 0', color: '#334155' }}>No related problems found</h4>
+                        <p style={{ margin: '0.25rem 0 0' }}>
+                          Try rephrasing the problem or providing more detail.
+                        </p>
+                      </div>
+                    ) : (
+                      <div style={{ marginTop: '0.5rem' }}>
+                        {renderInsightSections(insightAnswer)}
+                      </div>
+                    )}
+
                     <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                       <button
                         type="button"

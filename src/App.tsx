@@ -324,7 +324,7 @@ function App() {
 
                 <div className="search-info">
                   <p>
-                    <strong>Pro tip:</strong> Try searching with typos (e.g., "ipp")
+                    <strong>Pro tip:</strong> Try searching with typos (e.g., "trafffic")
                     or partial words (e.g., "out" for "outbound").
                   </p>
                 </div>

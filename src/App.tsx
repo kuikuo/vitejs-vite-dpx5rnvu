@@ -155,7 +155,7 @@ function App() {
     try {
       const res = await apiService.generateInsight(insightProblem.trim());
       setInsightAnswer(res.answer ?? null);
-      setInsightHitsCount(res.hitsCount ?? 0);
+      setInsightHitsCount(res.hitsCount ?? 0); // kept for future, but not shown in modal
     } catch {
       setInsightAnswer('No answer available.');
       setInsightHitsCount(0);
@@ -168,7 +168,13 @@ function App() {
   const renderInsightSections = (answer?: string | null) => {
     if (!answer) return null;
     const lines = answer.split('\n').map(l => l.trim());
+
     const labels = new Set([
+      'Insights for',
+      'Key Actions',
+      'Risks & Considerations',
+      'Indicators & Intel',
+      'Operational Guidance',
       'Problem Addressed',
       'Code Snippet',
       'Cybersecurity Context',
@@ -176,11 +182,21 @@ function App() {
       'Other Considerations',
       'General References'
     ]);
+
     const sections: Array<{ label: string; content: string[] }> = [];
     let current: { label: string; content: string[] } | null = null;
 
     for (const line of lines) {
       if (!line) continue;
+      const isInsightsFor = /^insights for\b/i.test(line);
+      if (isInsightsFor) {
+        // Close previous section
+        if (current) sections.push(current);
+        // Extract topic after colon (e.g., "Insights for: firewall")
+        const topic = line.split(':').slice(1).join(':').trim();
+        current = { label: 'Insights for', content: topic ? [topic] : [] };
+        continue;
+      }
       const normalized = line.replace(/:$/, '');
       if (labels.has(normalized)) {
         if (current) sections.push(current);
@@ -213,12 +229,8 @@ function App() {
         );
       }
 
-      // Special-case: General References — remove "Title:" duplicates and dedupe
       if (/general references/i.test(label)) {
-        // Flatten bullet lines, drop "Title:" lines, and dedupe normalized items
-        const rawItems = content.flatMap(line =>
-          line.startsWith('- ') ? [line.slice(2)] : [line]
-        );
+        const rawItems = content.flatMap(line => line.startsWith('- ') ? [line.slice(2)] : [line]);
         const filtered = rawItems.filter(item => !/^title:\s/i.test(item));
         const deduped: string[] = [];
         const seen = new Set<string>();
@@ -226,7 +238,7 @@ function App() {
           const key = s.replace(/\s+/g, ' ').trim().toLowerCase();
           if (!seen.has(key)) {
             seen.add(key);
-            deduped.push(s); // keep full text; no truncation
+            deduped.push(s);
           }
         }
         return (
@@ -558,37 +570,10 @@ function App() {
 
                 {insightAnswer && (
                   <>
-                    {/* Small statistic for related problems */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span style={{ background: '#f1f5f9', border: '1px solid #e5e7eb', borderRadius: 20, padding: '0.25rem 0.75rem', color: '#475569', fontSize: '0.9rem' }}>
-                        Related problems: <strong>{insightHitsCount}</strong>
-                      </span>
+                    {/* Render only insights (answer) content */}
+                    <div style={{ marginTop: '0.5rem' }}>
+                      {renderInsightSections(insightAnswer)}
                     </div>
-
-                    {/* No results view when no related hits */}
-                    {insightHitsCount === 0 ? (
-                      <div
-                        style={{
-                          marginTop: '0.5rem',
-                          background: '#f8fafc',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: 12,
-                          padding: '1rem',
-                          textAlign: 'center',
-                          color: '#475569'
-                        }}
-                      >
-                        <div style={{ fontSize: '2rem' }}>🔍</div>
-                        <h4 style={{ margin: '0.5rem 0 0', color: '#334155' }}>No related problems found</h4>
-                        <p style={{ margin: '0.25rem 0 0' }}>
-                          Try rephrasing the problem or providing more detail.
-                        </p>
-                      </div>
-                    ) : (
-                      <div style={{ marginTop: '0.5rem' }}>
-                        {renderInsightSections(insightAnswer)}
-                      </div>
-                    )}
 
                     <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                       <button
